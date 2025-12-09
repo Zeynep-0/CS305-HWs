@@ -1,0 +1,55 @@
+%{
+int line=1;
+int long_comment=0;
+%}
+%x COMMENT
+%x LONGCOMMENT
+
+%%
+[a-z] printf("%d_tIDENTIFIER_(%s)\n", line, yytext);
+[1-9][0-9]* printf("%d_tINTEGER_(%s)\n", line, yytext);
+"+" printf("%d_tPLUS\n", line); 
+"-" printf("%d_tMINUS\n", line);
+"*" printf("%d_tMUL\n", line);
+"^" printf("%d_tEXP\n", line);
+"(" printf("%d_tLPR\n", line);
+")" printf("%d_tRPR\n", line);
+"=" printf("%d_tASSIGN\n", line);
+"," printf("%d_tCOMMA\n", line);
+";" printf("%d_tSEMICOLON\n", line);
+"calculate" printf("%d_tCALCULATE\n", line);
+"D" printf("%d_tDERIVATION\n", line);
+"I" printf("%d_tINTEGRATION\n", line);
+\n line++;
+"//" BEGIN(COMMENT);
+<COMMENT>{
+    . ;
+    \n { line++;
+        BEGIN(INITIAL);
+    }
+} 
+
+"/*" {
+    BEGIN(LONGCOMMENT);
+    long_comment++;
+}
+<LONGCOMMENT>{
+    . ;
+    \n line++;
+    "/*" long_comment++;
+    "*/" {long_comment--;
+        if (long_comment == 0) {
+            BEGIN(INITIAL);
+        }
+    }
+}
+
+[ \t\r] ;  
+
+. printf("%d_ILLEGAL_CHARACTER_(%s)\n", line, yytext);
+
+%%
+int main(){
+    yylex();
+    return (0);
+}
